@@ -36,7 +36,12 @@ export async function installBunVersion({
   }
 
   const binDir = join(installDir, "bin");
-  const exe = join(binDir, "bun");
+  const exe = Bun.file(join(binDir, "bun"));
+
+  if (await exe.exists()) {
+    log.debug("Already installed:", version);
+    return;
+  }
 
   await mkdir(binDir, { recursive: true });
 
@@ -77,9 +82,9 @@ export async function installBunVersion({
 
   const unzippedDir = join(binDir, `bun-${target}`);
 
-  await rename(join(unzippedDir, exeName), exe);
+  await rename(join(unzippedDir, exeName), exe.name!);
 
-  await chmod(exe, 0o755);
+  await chmod(exe.name!, 0o755);
 
   await rm(unzippedDir, { recursive: true });
 }
