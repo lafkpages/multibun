@@ -1,6 +1,39 @@
-import { installBunVersionsInRange } from "./install";
+import { program, Option } from "commander";
+import { version } from "../package.json";
+import { commands } from "./commands";
+import log from "loglevel";
 
-await installBunVersionsInRange({
-  versionMin: "0.5.0",
-  installDir: (version) => `.cache/${version}`,
-});
+log.setDefaultLevel(log.levels.INFO);
+log.resetLevel();
+
+export { log };
+
+program
+  .name("multibun")
+  .version(version)
+  .addOption(
+    new Option("-v, --verbose", "Enable verbose logging").conflicts("--quiet")
+  )
+  .addOption(
+    new Option("-q, --quiet", "Disable logging").conflicts("--verbose")
+  )
+  .hook("preAction", (thisCommand) => {
+    const { verbose, quiet } = thisCommand.opts<{
+      verbose?: boolean;
+      quiet?: boolean;
+    }>();
+
+    if (verbose) {
+      log.enableAll();
+    }
+
+    if (quiet) {
+      log.disableAll();
+    }
+  });
+
+for (const command of commands) {
+  program.addCommand(command);
+}
+
+program.parse();

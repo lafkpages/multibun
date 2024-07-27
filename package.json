@@ -1,5 +1,6 @@
 {
   "name": "multibun",
+  "version": "0.0.1",
   "module": "src/index.ts",
   "type": "module",
   "devDependencies": {
@@ -9,6 +10,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "commander": "^12.1.0",
+    "loglevel": "^1.9.1",
     "octokit": "^4.0.2"
   }
 }

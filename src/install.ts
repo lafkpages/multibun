@@ -1,73 +1,15 @@
-import { platform, arch } from "node:os";
 import { join } from "node:path";
 import { mkdir, rename, chmod, rm } from "node:fs/promises";
-import { getAllReleases, tagNameToVersion } from "./github";
-
-export type BunTargetNormal =
-  | "darwin-aarch64"
-  | "darwin-x64"
-  | "darwin-x64-baseline"
-  | "linux-aarch64"
-  | "linux-x64"
-  | "linux-x64-baseline"
-  | "windows-x64"
-  | "windows-x64-baseline";
-export type BunTargetProfile = `${BunTargetNormal}-profile`;
-export type BunTarget = BunTargetNormal | BunTargetProfile;
+import { getAllReleases, tagNameToVersion, versionToTagName } from "./github";
+import { detectTarget, type BunTarget } from "./target";
+import { log } from ".";
 
 const allReleases = await getAllReleases();
 
-export function validateBunVersion(version: string) {
-  if (!allReleases.some((release) => release.tagName === version)) {
-    throw new Error(`Invalid Bun version: ${version}`);
+export function validateBunVersion(tagName: string) {
+  if (!allReleases.some((release) => release.tagName === tagName)) {
+    throw new Error(`Invalid Bun version: ${tagName}`);
   }
-}
-
-export function detectTarget() {
-  let target: BunTarget;
-
-  switch (`${platform()}-${arch()}`) {
-    case "darwin-x64":
-      target = "darwin-x64";
-      break;
-
-    case "darwin-arm64":
-      target = "darwin-aarch64";
-      break;
-
-    case "linux-arm64":
-      target = "linux-aarch64";
-      break;
-
-    case "linux-x64":
-      target = "linux-x64";
-      break;
-
-    case "win32-x64":
-      target = "windows-x64";
-      break;
-
-    default:
-      throw new Error("Unsupported platform");
-  }
-
-  if (target === "darwin-x64") {
-    const isRosetta =
-      Bun.spawnSync({
-        cmd: ["sysctl", "-n", "sysctl.proc_translated"],
-        stdin: "ignore",
-        stdout: "pipe",
-        stderr: "ignore",
-      })
-        .stdout.toString()
-        .trim() === "1";
-
-    if (isRosetta) {
-      target = "darwin-aarch64";
-    }
-  }
-
-  return target;
 }
 
 export async function installBunVersion({
@@ -84,7 +26,9 @@ export async function installBunVersion({
   if (!target) {
     target = detectTarget();
   }
-  const targetDownloadFile = Bun.file(`.cache/${version}-${target}.zip`);
+  const targetDownloadFile = Bun.file(
+    join(__dirname, `../.cache/${version}-${target}.zip`)
+  );
 
   let exeName = "bun";
   if (target.endsWith("-profile")) {
@@ -96,7 +40,11 @@ export async function installBunVersion({
 
   await mkdir(binDir, { recursive: true });
 
-  if (!(await targetDownloadFile.exists())) {
+  if (await targetDownloadFile.exists()) {
+    log.debug("Using cached:", version);
+  } else {
+    log.debug("Downloading:", version);
+
     const resp = await fetch(
       `https://github.com/oven-sh/bun/releases/download/${encodeURIComponent(
         version
@@ -111,6 +59,8 @@ export async function installBunVersion({
 
     await Bun.write(targetDownloadFile, resp);
   }
+
+  log.debug("Unzipping:", targetDownloadFile.name!, "to", binDir);
 
   const unzipProcess = Bun.spawn({
     cmd: ["unzip", "-oqd", binDir, targetDownloadFile.name!],
@@ -169,6 +119,13 @@ export async function installBunVersionsInRange({
   target?: BunTarget;
   onInstall?: (version: string) => void;
 }) {
+  if (versionMin) {
+    validateBunVersion(versionToTagName(versionMin));
+  }
+  if (versionMax) {
+    validateBunVersion(versionToTagName(versionMax));
+  }
+
   const versions: string[] = [];
 
   for (const release of allReleases) {
