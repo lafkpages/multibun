@@ -1,1 +1,1 @@
-# bun-multi-install
+# multibun

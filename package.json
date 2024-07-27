@@ -1,5 +1,5 @@
 {
-  "name": "bun-multi-install",
+  "name": "multibun",
   "module": "src/index.ts",
   "type": "module",
   "devDependencies": {
