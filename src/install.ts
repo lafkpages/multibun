@@ -18,15 +18,21 @@ export function validateBunVersion(tagName: string) {
   }
 }
 
+interface InstallBunVersionCommonOptions {
+  target?: BunTarget;
+}
+
+export interface InstallBunVersionOptions
+  extends InstallBunVersionCommonOptions {
+  version: string;
+  installDir: string;
+}
+
 export async function installBunVersion({
   version,
   installDir,
   target,
-}: {
-  version: string;
-  installDir: string;
-  target?: BunTarget;
-}) {
+}: InstallBunVersionOptions) {
   validateBunVersion(version);
 
   if (!target) {
@@ -99,26 +105,50 @@ export async function installBunVersion({
   await rm(unzippedDir, { recursive: true });
 }
 
+interface InstallBunVersionsCommonOptions
+  extends InstallBunVersionCommonOptions {
+  installDir: (version: string) => string;
+  onInstall?: (version: string) => void;
+  onError?: (err: unknown) => void;
+}
+
+export interface InstallBunVersionsOptions
+  extends InstallBunVersionsCommonOptions {
+  versions: string[];
+}
+
 export async function installBunVersions({
   versions,
   installDir,
   target,
   onInstall,
-}: {
-  versions: string[];
-  installDir: (version: string) => string;
-  target?: BunTarget;
-  onInstall?: (version: string) => void;
-}) {
+  onError,
+}: InstallBunVersionsOptions) {
   for (const version of versions) {
-    await installBunVersion({
+    const promise = installBunVersion({
       version,
       installDir: installDir(version),
       target,
     }).then(() => {
       onInstall?.(version);
     });
+
+    if (onError) {
+      try {
+        await promise;
+      } catch (err) {
+        onError(err);
+      }
+    } else {
+      await promise;
+    }
   }
+}
+
+export interface InstallBunVersionsInRangeOptions
+  extends InstallBunVersionsCommonOptions {
+  versionMin?: string;
+  versionMax?: string;
 }
 
 export async function installBunVersionsInRange({
@@ -127,13 +157,8 @@ export async function installBunVersionsInRange({
   installDir,
   target,
   onInstall,
-}: {
-  versionMin?: string;
-  versionMax?: string;
-  installDir: (version: string) => string;
-  target?: BunTarget;
-  onInstall?: (version: string) => void;
-}) {
+  onError,
+}: InstallBunVersionsInRangeOptions) {
   if (versionMin) {
     validateBunVersion(versionToTagName(versionMin));
   }
@@ -161,5 +186,11 @@ export async function installBunVersionsInRange({
     versions.push(release.tagName);
   }
 
-  await installBunVersions({ versions, installDir, target, onInstall });
+  await installBunVersions({
+    versions,
+    installDir,
+    target,
+    onInstall,
+    onError,
+  });
 }

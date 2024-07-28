@@ -35,6 +35,9 @@ export default new Command("install")
         onInstall(version) {
           log.info(`Installed Bun version: ${version}`);
         },
+        onError(err) {
+          log.error("Failed to install Bun version:", err);
+        },
       });
     }
   );
