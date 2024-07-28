@@ -14,6 +14,9 @@ const allReleasesCache = Bun.file(
   join(__dirname, "../.cache/all-releases.json")
 );
 
+export const bunReleasesRepoOwner = "jarred-sumner";
+export const bunReleasesRepoName = "bun-releases-for-updater";
+
 interface QueryData {
   repository: {
     releases: {
@@ -36,9 +39,10 @@ export async function getAllReleases(
     }
   }
 
-  const releases = await octokit.graphql.paginate<QueryData>(`
-    query allReleases($cursor: String) {
-      repository(owner: "jarred-sumner", name: "bun-releases-for-updater") {
+  const releases = await octokit.graphql.paginate<QueryData>(
+    `
+    query allReleases($owner: String!, $name: String!, $cursor: String) {
+      repository(owner: $owner, name: $name) {
         releases(first: 100, after: $cursor) {
           nodes {
             tagName
@@ -50,7 +54,12 @@ export async function getAllReleases(
         }
       }
     }
-  `);
+  `,
+    {
+      owner: bunReleasesRepoOwner,
+      name: bunReleasesRepoName,
+    }
+  );
   const releasesNodes = releases?.repository?.releases?.nodes;
 
   if (!releasesNodes?.length) {

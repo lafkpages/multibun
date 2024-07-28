@@ -1,6 +1,12 @@
 import { join } from "node:path";
 import { mkdir, rename, chmod, rm } from "node:fs/promises";
-import { getAllReleases, tagNameToVersion, versionToTagName } from "./github";
+import {
+  bunReleasesRepoName,
+  bunReleasesRepoOwner,
+  getAllReleases,
+  tagNameToVersion,
+  versionToTagName,
+} from "./github";
 import { detectTarget, type BunTarget } from "./target";
 import { log } from ".";
 
@@ -51,7 +57,11 @@ export async function installBunVersion({
     log.debug("Downloading:", version);
 
     const resp = await fetch(
-      `https://github.com/oven-sh/bun/releases/download/${encodeURIComponent(
+      `https://github.com/${encodeURIComponent(
+        bunReleasesRepoOwner
+      )}/${encodeURIComponent(
+        bunReleasesRepoName
+      )}/releases/download/${encodeURIComponent(
         version
       )}/bun-${encodeURIComponent(target)}.zip`
     );
