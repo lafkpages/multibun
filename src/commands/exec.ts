@@ -1,4 +1,5 @@
-import { Command } from "commander";
+import { stringify } from "csv-stringify/sync";
+import { Command, Option } from "commander";
 import { log } from "..";
 import { join } from "node:path";
 import { validateBunVersion } from "../install";
@@ -17,13 +18,20 @@ export default new Command("exec")
     "-d, --install-dir <installDir>",
     "Directory containing Bun versions to execute"
   )
+  .addOption(
+    new Option(
+      "--csv [file]",
+      "Output results in CSV format, optionally specifying a file to write to"
+    ).implies({ output: false })
+  )
   .action(async function (
     this: Command,
     options: {
       from?: string;
       to?: string;
-      installDir: string;
       output: boolean;
+      installDir: string;
+      csv?: string | boolean;
     }
   ) {
     if (options.from) {
@@ -48,6 +56,8 @@ export default new Command("exec")
       .sort(([, versionA], [, versionB]) =>
         Bun.semver.order(versionA, versionB)
       );
+
+    const results: [string, string][] = [];
 
     for await (const [bunInstallation, version] of bunInstallations) {
       log.debug("Found Bun installation:", bunInstallation);
@@ -77,6 +87,24 @@ export default new Command("exec")
         log.info("Bun process crashed or killed");
       } else {
         log.info("Bun process exited with code:", bunProcess.exitCode);
+      }
+
+      // only keep track of the results if we are outputting in CSV format
+      if (options.csv) {
+        results.push([version, bunProcess.exitCode?.toString() ?? "K"]);
+      }
+    }
+
+    if (options.csv) {
+      const csv = stringify(results, {
+        header: true,
+        columns: ["version", "exitCode"],
+      });
+
+      if (typeof options.csv === "string") {
+        Bun.write(options.csv, csv);
+      } else {
+        console.log(csv);
       }
     }
   });
