@@ -5,14 +5,14 @@ import { join } from "node:path";
 import { validateBunVersion } from "../install";
 import { versionToTagName } from "../github";
 
-export default new Command("exec")
-  .description("Execute several Bun versions with the given arguments")
-  .option("-f, --from <version>", "Lower bound of version range to execute")
-  .option("-t, --to <version>", "Upper bound of version range to execute")
+export default new Command("run")
+  .description("Run several Bun versions with the given arguments")
+  .option("-f, --from <version>", "Lower bound of version range to run")
+  .option("-t, --to <version>", "Upper bound of version range to run")
   .option("-n, --no-output", "Do not show stdout/stderr of Bun processes", true)
   .requiredOption(
     "-d, --install-dir <installDir>",
-    "Directory containing Bun versions to execute"
+    "Directory containing Bun versions to run"
   )
   .addOption(
     new Option(
