@@ -9,11 +9,7 @@ export default new Command("exec")
   .description("Execute several Bun versions with the given arguments")
   .option("-f, --from <version>", "Lower bound of version range to execute")
   .option("-t, --to <version>", "Upper bound of version range to execute")
-  .option(
-    "-n, --no-output",
-    "Do not show stdout/stderr of Bun processes",
-    false
-  )
+  .option("-n, --no-output", "Do not show stdout/stderr of Bun processes", true)
   .requiredOption(
     "-d, --install-dir <installDir>",
     "Directory containing Bun versions to execute"
@@ -22,7 +18,7 @@ export default new Command("exec")
     new Option(
       "--csv [file]",
       "Output results in CSV format, optionally specifying a file to write to"
-    ).implies({ output: false })
+    )
   )
   .action(async function (
     this: Command,
