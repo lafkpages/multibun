@@ -11,6 +11,7 @@
         <tr>
           <th>Version</th>
           <th>Exit code</th>
+          <th>Time</th>
         </tr>
       </thead>
       <tbody>
@@ -18,6 +19,7 @@
         <tr>
           <td><%= result[0] %></td>
           <td><%= result[1] %></td>
+          <td><%= result[2].toFixed(2) %>ms</td>
         </tr>
         <% } %>
       </tbody>

@@ -3,7 +3,7 @@ import { log } from "..";
 import { join } from "node:path";
 import { validateBunVersion } from "../install";
 import { versionToTagName } from "../github";
-import { reportGenerators } from "../reports";
+import { runReportGenerators, type RunReportResult } from "../reports";
 
 const command = new Command("run")
   .description("Run several Bun versions with the given arguments")
@@ -15,7 +15,7 @@ const command = new Command("run")
     "Directory containing Bun versions to run"
   );
 
-for (const generator of reportGenerators) {
+for (const generator of runReportGenerators) {
   command.option(`${generator.flag} [file]`, generator.description);
 }
 
@@ -27,7 +27,7 @@ command.action(async function (
     output: boolean;
     installDir: string;
   } & {
-    [key in (typeof reportGenerators)[number]["key"]]?: string | boolean;
+    [key in (typeof runReportGenerators)[number]["key"]]?: string | boolean;
   }
 ) {
   if (options.from) {
@@ -51,8 +51,8 @@ command.action(async function (
     ])
     .sort(([, versionA], [, versionB]) => Bun.semver.order(versionA, versionB));
 
-  const results: [string, string][] = [];
-  const isGeneratingReport = reportGenerators.some(
+  const results: RunReportResult[] = [];
+  const isGeneratingReport = runReportGenerators.some(
     (generator) => options[generator.key]
   );
 
@@ -71,6 +71,7 @@ command.action(async function (
 
     const stdio = options.output ? "inherit" : "ignore";
 
+    const startTime = performance.now();
     const bunProcess = Bun.spawn({
       cmd: [join(options.installDir, bunInstallation), ...this.args],
       stdin: stdio,
@@ -80,6 +81,10 @@ command.action(async function (
 
     await bunProcess.exited;
 
+    const endTime = performance.now();
+    const procTime = endTime - startTime;
+
+    log.debug("Bun process took", procTime, "ms");
     if (bunProcess.exitCode === null) {
       log.info("Bun process crashed or killed");
     } else {
@@ -88,12 +93,12 @@ command.action(async function (
 
     // only keep track of the results if we are generating a report
     if (isGeneratingReport) {
-      results.push([version, bunProcess.exitCode?.toString() ?? "K"]);
+      results.push([version, bunProcess.exitCode, procTime]);
     }
   }
 
   if (isGeneratingReport) {
-    for (const generator of reportGenerators) {
+    for (const generator of runReportGenerators) {
       const generatorOption = options[generator.key];
       if (!generatorOption) {
         continue;

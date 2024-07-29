@@ -1,4 +1,4 @@
-import type { ReportGenerator } from ".";
+import type { RunReportGenerator } from ".";
 import { render } from "ejs";
 import template from "./template.ejs";
 
@@ -9,4 +9,4 @@ export default {
   generate(results) {
     return render(template, { results });
   },
-} as const satisfies ReportGenerator;
+} as const satisfies RunReportGenerator;

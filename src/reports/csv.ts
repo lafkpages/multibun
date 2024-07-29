@@ -1,5 +1,5 @@
 import { stringify } from "csv-stringify/sync";
-import type { ReportGenerator } from ".";
+import type { RunReportGenerator } from ".";
 
 export default {
   flag: "--csv",
@@ -8,7 +8,7 @@ export default {
   generate(results) {
     return stringify(results, {
       header: true,
-      columns: ["version", "exitCode"],
+      columns: ["version", "exitCode", "time"],
     });
   },
-} as const satisfies ReportGenerator;
+} as const satisfies RunReportGenerator;
