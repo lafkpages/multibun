@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>multibun run report</title>
+  </head>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Exit code</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const result of results) { %>
+        <tr>
+          <td><%= result[0] %></td>
+          <td><%= result[1] %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </body>
+</html>
