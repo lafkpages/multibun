@@ -1,9 +1,11 @@
 import { default as csv } from "./csv";
 import { default as html } from "./html";
+import { default as table } from "./table";
 
 export const runReportGenerators = [
   csv,
   html,
+  table,
 ] as const satisfies RunReportGenerator[];
 
 export interface RunReportGenerator {
