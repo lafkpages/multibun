@@ -13,6 +13,12 @@ export interface RunReportGenerator {
   generate(results: RunReportResult[]): MaybePromise<string>;
 }
 
-export type RunReportResult = [string, number | null, number];
+export interface RunReportResult {
+  version: string;
+  exitCode: number | null;
+  time: number;
+  stdout?: string;
+  stderr?: string;
+}
 
 type MaybePromise<T> = T | Promise<T>;

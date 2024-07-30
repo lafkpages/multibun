@@ -69,7 +69,11 @@ command.action(async function (
 
     log.info("Executing Bun version:", version);
 
-    const stdio = options.output ? "inherit" : "ignore";
+    const stdio = options.output
+      ? "inherit"
+      : isGeneratingReport
+      ? "pipe"
+      : "ignore";
 
     const startTime = performance.now();
     const bunProcess = Bun.spawn({
@@ -82,9 +86,9 @@ command.action(async function (
     await bunProcess.exited;
 
     const endTime = performance.now();
-    const procTime = endTime - startTime;
+    const time = endTime - startTime;
 
-    log.debug("Bun process took", procTime, "ms");
+    log.debug("Bun process took", time, "ms");
     if (bunProcess.exitCode === null) {
       log.info("Bun process crashed or killed");
     } else {
@@ -93,7 +97,18 @@ command.action(async function (
 
     // only keep track of the results if we are generating a report
     if (isGeneratingReport) {
-      results.push([version, bunProcess.exitCode, procTime]);
+      results.push({
+        version,
+        exitCode: bunProcess.exitCode,
+        time,
+
+        stdout: bunProcess.stdout
+          ? await Bun.readableStreamToText(bunProcess.stdout)
+          : undefined,
+        stderr: bunProcess.stderr
+          ? await Bun.readableStreamToText(bunProcess.stderr)
+          : undefined,
+      });
     }
   }
 

@@ -8,7 +8,6 @@ export default {
   generate(results) {
     return stringify(results, {
       header: true,
-      columns: ["version", "exitCode", "time"],
     });
   },
 } as const satisfies RunReportGenerator;

@@ -4,6 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>multibun run report</title>
+
+    <% const hasOutput = results.some((result) => result.stdout ||
+    result.stderr); %>
+
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        min-width: max-content;
+      }
+
+      .run-report-result .stdo {
+        position: relative;
+        width: 50%;
+      }
+
+      .run-report-result .stdo textarea {
+        transition: height 0.2s;
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        box-sizing: border-box;
+        margin: 0px;
+      }
+
+      .run-report-result:hover .stdo textarea {
+        z-index: 2;
+        top: calc(var(--height) / -2 + 50%);
+        bottom: calc(var(--height) / -2 + 50%);
+      }
+
+      .run-report-result:hover {
+        background-color: darkgray;
+      }
+    </style>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const stdoTextareas = document.querySelectorAll(".stdo textarea");
+
+        for (const textarea of stdoTextareas) {
+          textarea.style.setProperty("--height", `${textarea.scrollHeight}px`);
+        }
+      });
+    </script>
   </head>
   <body>
     <table>
@@ -12,14 +63,36 @@
           <th>Version</th>
           <th>Exit code</th>
           <th>Time</th>
+          <% if (hasOutput) { %>
+          <th>Stdout</th>
+          <th>Stderr</th>
+          <% } %>
         </tr>
       </thead>
       <tbody>
         <% for (const result of results) { %>
-        <tr>
-          <td><%= result[0] %></td>
-          <td><%= result[1] %></td>
-          <td><%= result[2].toFixed(2) %>ms</td>
+        <tr class="run-report-result">
+          <td>
+            <a
+              href="https://github.com/oven-sh/bun/releases/bun-v<%= result.version %>"
+            >
+              <%= result.version %>
+            </a>
+          </td>
+          <td><%= result.exitCode ?? 'K' %></td>
+          <td><%= result.time.toFixed(2) %>ms</td>
+          <% if (hasOutput) { %>
+          <td class="stdo">
+            <% if (result.stdout) { %>
+            <textarea readonly><%= result.stdout %></textarea>
+            <% } %>
+          </td>
+          <td class="stdo">
+            <% if (result.stderr) { %>
+            <textarea readonly><%= result.stderr %></textarea>
+            <% } %>
+          </td>
+          <% } %>
         </tr>
         <% } %>
       </tbody>
