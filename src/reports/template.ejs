@@ -41,6 +41,18 @@
         bottom: calc(var(--height) / -2 + 50%);
       }
 
+      .run-report-result.proc-success .exit-code {
+        background-color: lightgreen;
+      }
+
+      .run-report-result.proc-fail .exit-code {
+        background-color: lightcoral;
+      }
+
+      .run-report-result.proc-killed .exit-code {
+        background-color: lightgray;
+      }
+
       .run-report-result:hover {
         background-color: darkgray;
       }
@@ -71,7 +83,9 @@
       </thead>
       <tbody>
         <% for (const result of results) { %>
-        <tr class="run-report-result">
+        <tr
+          class="run-report-result proc-<%- result.exitCode===null?'killed':(result.exitCode===0?'success':'fail') %>"
+        >
           <td>
             <a
               href="https://github.com/oven-sh/bun/releases/bun-v<%= result.version %>"
@@ -79,7 +93,11 @@
               <%= result.version %>
             </a>
           </td>
-          <td><%= result.exitCode ?? 'K' %></td>
+          <% if (result.exitCode === null) { %>
+          <td class="exit-code" title="The process crashed or was killed">K</td>
+          <% } else { %>
+          <td class="exit-code"><%= result.exitCode %></td>
+          <% } %>
           <td><%= result.time.toFixed(2) %>ms</td>
           <% if (hasOutput) { %>
           <td class="stdo">
