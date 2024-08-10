@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { Command, Option } from "commander";
+import { Command, Option, program } from "commander";
 import { installBunVersionsInRange } from "../install";
 import { bunTargets, type BunTarget } from "../target";
 import { log } from "..";
@@ -29,10 +29,9 @@ export default new Command("install")
       const installDir = options.installDir || multibunInstallDir;
 
       if (!options.from && !options.to) {
-        console.error(
+        program.error(
           "Neither --from nor --to was provided, this is probably a mistake, exiting."
         );
-        process.exit(1);
       }
 
       await installBunVersionsInRange({
