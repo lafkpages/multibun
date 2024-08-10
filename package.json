@@ -11,6 +11,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^12.1.0",
     "commander": "^12.1.0",
     "csv-stringify": "^6.5.1",
     "ejs": "^3.1.10",

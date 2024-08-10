@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { Command, Option, program } from "commander";
+import { Command, Option, program } from "@commander-js/extra-typings";
 import { installBunVersionsInRange } from "../install";
 import { bunTargets, type BunTarget } from "../target";
 import { log } from "..";
@@ -19,34 +19,27 @@ export default new Command("install")
     "-d, --install-dir <installDir>",
     "Directory to install Bun versions in"
   )
-  .action(
-    async (options: {
-      from?: string;
-      to?: string;
-      target?: BunTarget;
-      installDir?: string;
-    }) => {
-      const installDir = options.installDir || multibunInstallDir;
+  .action(async (options) => {
+    const installDir = options.installDir || multibunInstallDir;
 
-      if (!options.from && !options.to) {
-        program.error(
-          "Neither --from nor --to was provided, this is probably a mistake, exiting."
-        );
-      }
-
-      await installBunVersionsInRange({
-        versionMin: options.from,
-        versionMax: options.to,
-        installDir(version) {
-          return join(installDir, version);
-        },
-        target: options.target,
-        onInstall(version) {
-          log.info(`Installed Bun version: ${version}`);
-        },
-        onError(err) {
-          log.error("Failed to install Bun version:", err);
-        },
-      });
+    if (!options.from && !options.to) {
+      program.error(
+        "Neither --from nor --to was provided, this is probably a mistake, exiting."
+      );
     }
-  );
+
+    await installBunVersionsInRange({
+      versionMin: options.from,
+      versionMax: options.to,
+      installDir(version) {
+        return join(installDir, version);
+      },
+      target: options.target,
+      onInstall(version) {
+        log.info(`Installed Bun version: ${version}`);
+      },
+      onError(err) {
+        log.error("Failed to install Bun version:", err);
+      },
+    });
+  });

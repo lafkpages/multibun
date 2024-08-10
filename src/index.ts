@@ -1,4 +1,4 @@
-import { program, Option } from "commander";
+import { program, Option } from "@commander-js/extra-typings";
 import { version } from "../package.json";
 import { commands } from "./commands";
 import log from "loglevel";
@@ -18,10 +18,7 @@ program
     new Option("-q, --quiet", "Disable logging").conflicts("--verbose")
   )
   .hook("preAction", (thisCommand) => {
-    const { verbose, quiet } = thisCommand.opts<{
-      verbose?: boolean;
-      quiet?: boolean;
-    }>();
+    const { verbose, quiet } = thisCommand.opts();
 
     if (verbose) {
       log.enableAll();

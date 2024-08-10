@@ -1,4 +1,4 @@
-import { Command } from "commander";
+import { Command } from "@commander-js/extra-typings";
 import { log } from "..";
 import { join } from "node:path";
 import { validateBunVersion } from "../install";
@@ -6,7 +6,10 @@ import { versionToTagName } from "../github";
 import { runReportGenerators, type RunReportResult } from "../reports";
 import { multibunInstallDir } from "../config";
 
-const command = new Command("run")
+const command = new Command<
+  [],
+  { [key in (typeof runReportGenerators)[number]["key"]]?: string | boolean }
+>("run")
   .description("Run several Bun versions with the given arguments")
   .option("-f, --from <version>", "Lower bound of version range to run")
   .option("-t, --to <version>", "Upper bound of version range to run")
@@ -20,17 +23,7 @@ for (const generator of runReportGenerators) {
   command.option(`${generator.flag} [file]`, generator.description);
 }
 
-command.action(async function (
-  this: Command,
-  options: {
-    from?: string;
-    to?: string;
-    output: boolean;
-    installDir?: string;
-  } & {
-    [key in (typeof runReportGenerators)[number]["key"]]?: string | boolean;
-  }
-) {
+command.action(async function (this: Command, options) {
   if (options.from) {
     validateBunVersion(versionToTagName(options.from));
   }
