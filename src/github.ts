@@ -1,6 +1,7 @@
 import { Octokit } from "octokit";
 import { join } from "node:path";
 import { log } from ".";
+import { multibunCacheDir, multibunDir } from "./config";
 
 if (!process.env.GITHUB_API_TOKEN) {
   throw new Error("$GITHUB_TOKEN is required");
@@ -10,9 +11,7 @@ const octokit = new Octokit({
   auth: process.env.GITHUB_API_TOKEN,
 });
 
-const allReleasesCache = Bun.file(
-  join(__dirname, "../.cache/all-releases.json")
-);
+const allReleasesCache = Bun.file(join(multibunCacheDir, "all-releases.json"));
 
 export const bunReleasesRepoOwner = "jarred-sumner";
 export const bunReleasesRepoName = "bun-releases-for-updater";

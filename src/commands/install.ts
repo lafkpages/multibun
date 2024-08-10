@@ -3,6 +3,7 @@ import { Command, Option } from "commander";
 import { installBunVersionsInRange } from "../install";
 import { bunTargets, type BunTarget } from "../target";
 import { log } from "..";
+import { multibunInstallDir } from "../config";
 
 export default new Command("install")
   .description("Install all Bun versions in a given range")
@@ -14,7 +15,7 @@ export default new Command("install")
       "Platform target to install Bun versions for"
     ).choices(bunTargets)
   )
-  .requiredOption(
+  .option(
     "-d, --install-dir <installDir>",
     "Directory to install Bun versions in"
   )
@@ -23,13 +24,15 @@ export default new Command("install")
       from?: string;
       to?: string;
       target?: BunTarget;
-      installDir: string;
+      installDir?: string;
     }) => {
+      const installDir = options.installDir || multibunInstallDir;
+
       await installBunVersionsInRange({
         versionMin: options.from,
         versionMax: options.to,
         installDir(version) {
-          return join(options.installDir, version);
+          return join(installDir, version);
         },
         target: options.target,
         onInstall(version) {

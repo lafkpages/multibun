@@ -4,13 +4,14 @@ import { join } from "node:path";
 import { validateBunVersion } from "../install";
 import { versionToTagName } from "../github";
 import { runReportGenerators, type RunReportResult } from "../reports";
+import { multibunInstallDir } from "../config";
 
 const command = new Command("run")
   .description("Run several Bun versions with the given arguments")
   .option("-f, --from <version>", "Lower bound of version range to run")
   .option("-t, --to <version>", "Upper bound of version range to run")
   .option("-n, --no-output", "Do not show stdout/stderr of Bun processes", true)
-  .requiredOption(
+  .option(
     "-d, --install-dir <installDir>",
     "Directory containing Bun versions to run"
   );
@@ -25,7 +26,7 @@ command.action(async function (
     from?: string;
     to?: string;
     output: boolean;
-    installDir: string;
+    installDir?: string;
   } & {
     [key in (typeof runReportGenerators)[number]["key"]]?: string | boolean;
   }
@@ -37,10 +38,12 @@ command.action(async function (
     validateBunVersion(versionToTagName(options.to));
   }
 
+  const installDir = options.installDir || multibunInstallDir;
+
   const bunInstallations = (
     await Array.fromAsync(
       new Bun.Glob("bun-v?*/bin/bun").scan({
-        cwd: options.installDir,
+        cwd: installDir,
         onlyFiles: false,
       })
     )
@@ -77,7 +80,7 @@ command.action(async function (
 
     const startTime = performance.now();
     const bunProcess = Bun.spawn({
-      cmd: [join(options.installDir, bunInstallation), ...this.args],
+      cmd: [join(installDir, bunInstallation), ...this.args],
       stdin: stdio,
       stdout: stdio,
       stderr: stdio,

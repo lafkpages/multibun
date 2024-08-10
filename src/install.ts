@@ -9,6 +9,7 @@ import {
 } from "./github";
 import { detectTarget, type BunTarget } from "./target";
 import { log } from ".";
+import { multibunCacheDir } from "./config";
 
 const allReleases = await getAllReleases();
 
@@ -39,7 +40,7 @@ export async function installBunVersion({
     target = detectTarget();
   }
   const targetDownloadFile = Bun.file(
-    join(__dirname, `../.cache/${version}-${target}.zip`)
+    join(multibunCacheDir, `${version}-${target}.zip`)
   );
 
   let exeName = "bun";
