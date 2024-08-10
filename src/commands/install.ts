@@ -28,6 +28,13 @@ export default new Command("install")
     }) => {
       const installDir = options.installDir || multibunInstallDir;
 
+      if (!options.from && !options.to) {
+        console.error(
+          "Neither --from nor --to was provided, this is probably a mistake, exiting."
+        );
+        process.exit(1);
+      }
+
       await installBunVersionsInRange({
         versionMin: options.from,
         versionMax: options.to,
