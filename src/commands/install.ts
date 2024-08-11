@@ -5,7 +5,7 @@ import { installBunVersion, installBunVersionsInRange } from "../install";
 import { bunTargets } from "../target";
 
 const command = new Command("install")
-  .description("Install all Bun versions in a given range")
+  .description("Install one or several versions of Bun")
   .option("-f, --from <version>", "Lower bound of version range to install")
   .option("-t, --to <version>", "Upper bound of version range to install")
   .addOption(
