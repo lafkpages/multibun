@@ -9,12 +9,14 @@ export const bunReleasesRepoOwner = "jarred-sumner";
 export const bunReleasesRepoName = "bun-releases-for-updater";
 
 interface QueryData {
-  repository: {
-    releases: {
-      nodes: { tagName: string }[];
-      pageInfo: {
-        hasNextPage: boolean;
-        endCursor: string | null;
+  data: {
+    repository: {
+      releases: {
+        nodes: { tagName: string }[];
+        pageInfo: {
+          hasNextPage: boolean;
+          endCursor: string | null;
+        };
       };
     };
   };
@@ -22,7 +24,7 @@ interface QueryData {
 
 export async function getAllReleases(
   useCache = true,
-): Promise<QueryData["repository"]["releases"]["nodes"]> {
+): Promise<QueryData["data"]["repository"]["releases"]["nodes"]> {
   if (useCache) {
     const allReleasesCacheStat = await stat(allReleasesCache).catch(() => null);
     const allReleasesCacheAge = allReleasesCacheStat
@@ -37,7 +39,7 @@ export async function getAllReleases(
     }
   }
 
-  const releases: QueryData["repository"]["releases"]["nodes"] = [];
+  const releases: QueryData["data"]["repository"]["releases"]["nodes"] = [];
 
   let cursor: string | null = null;
   const headers = new Headers();
@@ -72,13 +74,13 @@ export async function getAllReleases(
       headers,
     }).then((r) => r.json());
 
-    releases.push(...resp.repository.releases.nodes);
+    releases.push(...resp.data.repository.releases.nodes);
 
-    if (!resp.repository.releases.pageInfo.hasNextPage) {
+    if (!resp.data.repository.releases.pageInfo.hasNextPage) {
       break;
     }
 
-    cursor = resp.repository.releases.pageInfo.endCursor;
+    cursor = resp.data.repository.releases.pageInfo.endCursor;
   }
 
   if (!releases.length) {
