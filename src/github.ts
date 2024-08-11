@@ -1,17 +1,13 @@
 import { join } from "node:path";
 
-import { Octokit } from "octokit";
-
-import { log } from ".";
-import { multibunCacheDir, multibunDir } from "./config";
+import { multibunCacheDir } from "./config";
 
 if (!process.env.GITHUB_API_TOKEN) {
   throw new Error("$GITHUB_TOKEN is required");
 }
 
-const octokit = new Octokit({
-  auth: process.env.GITHUB_API_TOKEN,
-});
+const githubApi =
+  process.env.GITHUB_GRAPHQL_ENDPOINT || "https://api.github.com/graphql";
 
 const allReleasesCache = Bun.file(join(multibunCacheDir, "all-releases.json"));
 
@@ -22,13 +18,15 @@ interface QueryData {
   repository: {
     releases: {
       nodes: { tagName: string }[];
+      pageInfo: {
+        hasNextPage: boolean;
+        endCursor: string | null;
+      };
     };
   };
 }
 
-export async function getAllReleases(
-  useCache = true,
-): Promise<QueryData["repository"]["releases"]["nodes"]> {
+export async function getAllReleases(useCache = true) {
   if (useCache) {
     const allReleasesCacheAge = Date.now() - allReleasesCache.lastModified;
 
@@ -40,37 +38,52 @@ export async function getAllReleases(
     }
   }
 
-  const releases = await octokit.graphql.paginate<QueryData>(
-    `
-    query allReleases($owner: String!, $name: String!, $cursor: String) {
-      repository(owner: $owner, name: $name) {
-        releases(first: 100, after: $cursor) {
-          nodes {
-            tagName
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
-      }
-    }
-  `,
-    {
-      owner: bunReleasesRepoOwner,
-      name: bunReleasesRepoName,
-    },
-  );
-  const releasesNodes = releases?.repository?.releases?.nodes;
+  const releases: QueryData["repository"]["releases"]["nodes"] = [];
 
-  if (!releasesNodes?.length) {
-    log.debug(releases);
+  let cursor: string | null = null;
+  while (true) {
+    const resp: QueryData = await fetch(githubApi, {
+      method: "POST",
+      body: JSON.stringify({
+        query: `
+          query allReleases($owner: String!, $name: String!, $cursor: String) {
+            repository(owner: $owner, name: $name) {
+              releases(first: 100, after: $cursor) {
+                nodes {
+                  tagName
+                }
+                pageInfo {
+                  hasNextPage
+                  endCursor
+                }
+              }
+            }
+          }
+        `,
+        variables: {
+          owner: bunReleasesRepoOwner,
+          name: bunReleasesRepoName,
+          cursor,
+        },
+      }),
+    }).then((r) => r.json());
+
+    releases.push(...resp.repository.releases.nodes);
+
+    if (!resp.repository.releases.pageInfo.hasNextPage) {
+      break;
+    }
+
+    cursor = resp.repository.releases.pageInfo.endCursor;
+  }
+
+  if (!releases.length) {
     throw new Error("Failed to fetch all Bun releases from GitHub");
   }
 
-  await Bun.write(allReleasesCache, JSON.stringify(releasesNodes));
+  await Bun.write(allReleasesCache, JSON.stringify(releases));
 
-  return releasesNodes;
+  return releases;
 }
 
 export function tagNameToVersion(tagName: string) {

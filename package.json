@@ -17,10 +17,10 @@
     "commander": "^12.1.0",
     "csv-stringify": "^6.5.1",
     "ejs": "^3.1.10",
-    "loglevel": "^1.9.1",
-    "octokit": "^4.0.2"
+    "loglevel": "^1.9.1"
   },
   "scripts": {
+    "build": "bun build ./src/index.ts --minify --sourcemap --compile --outfile dist/multibun",
     "format": "prettier --write ."
   }
 }
