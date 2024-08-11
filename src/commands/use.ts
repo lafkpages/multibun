@@ -1,4 +1,4 @@
-import { readlink, symlink, unlink } from "node:fs/promises";
+import { access, constants, symlink, unlink } from "node:fs/promises";
 import { join } from "node:path";
 
 import { Command, program } from "@commander-js/extra-typings";
@@ -53,11 +53,13 @@ export default new Command("use")
       }
     }
 
-    const newBunExec = Bun.file(
-      join(multibunInstallDir, version, "bin", "bun"),
-    );
+    const newBunExec = join(multibunInstallDir, version, "bin", "bun");
 
-    if (!(await newBunExec.exists())) {
+    if (
+      !(await access(newBunExec, constants.R_OK | constants.X_OK).catch(
+        () => false,
+      ))
+    ) {
       program.error(`\
 Version ${version} is not installed.
 
@@ -65,5 +67,5 @@ Hint: try running 'multibun install ${version}' to install it.`);
     }
 
     await unlink(bunExec);
-    await symlink(newBunExec.name!, bunExec, "file");
+    await symlink(newBunExec, bunExec, "file");
   });

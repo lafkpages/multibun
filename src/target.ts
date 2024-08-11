@@ -1,4 +1,6 @@
+import { exec } from "node:child_process";
 import { arch, platform } from "node:os";
+import { promisify } from "node:util";
 
 export const bunTargetsNormal = [
   "darwin-aarch64",
@@ -27,7 +29,7 @@ export type BunTargetProfile = (typeof bunTargetsProfile)[number];
 export const bunTargets = [...bunTargetsNormal, ...bunTargetsProfile] as const;
 export type BunTarget = (typeof bunTargets)[number];
 
-export function detectTarget() {
+export async function detectTarget() {
   let target: BunTarget;
 
   switch (`${platform()}-${arch()}`) {
@@ -57,14 +59,9 @@ export function detectTarget() {
 
   if (target === "darwin-x64") {
     const isRosetta =
-      Bun.spawnSync({
-        cmd: ["sysctl", "-n", "sysctl.proc_translated"],
-        stdin: "ignore",
-        stdout: "pipe",
-        stderr: "ignore",
-      })
-        .stdout.toString()
-        .trim() === "1";
+      (
+        await promisify(exec)("sysctl -n sysctl.proc_translated")
+      ).stdout.trim() === "1";
 
     if (isRosetta) {
       target = "darwin-aarch64";

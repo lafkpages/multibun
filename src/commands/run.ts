@@ -1,5 +1,7 @@
 import type { RunReportResult } from "../reports";
 
+import { spawn } from "node:child_process";
+import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { Command, Option, program } from "@commander-js/extra-typings";
@@ -9,6 +11,8 @@ import { multibunInstallDir } from "../config";
 import { versionToTagName } from "../github";
 import { getInstalledVersions, validateBunVersion } from "../install";
 import { runReportGenerators } from "../reports";
+import { compareSemver } from "../semver";
+import { childProcessFinished, streamToString } from "../utils";
 
 const command = new Command<
   [],
@@ -56,15 +60,15 @@ command.action(async function (this: Command, options) {
   for await (const [bunInstallation, version] of bunInstallations) {
     log.debug("Found Bun installation:", bunInstallation);
 
-    if (options.from && Bun.semver.order(version, options.from) === -1) {
+    if (options.from && compareSemver(version, options.from) === -1) {
       continue;
     }
 
-    if (options.to && Bun.semver.order(version, options.to) === 1) {
+    if (options.to && compareSemver(version, options.to) === 1) {
       continue;
     }
 
-    if (options.V && Bun.semver.order(version, options.V)) {
+    if (options.V && compareSemver(version, options.V)) {
       continue;
     }
 
@@ -77,20 +81,21 @@ command.action(async function (this: Command, options) {
         : "ignore";
 
     const startTime = performance.now();
-    const bunProcess = Bun.spawn({
-      cmd: [join(multibunInstallDir, bunInstallation), ...this.args],
-      stdin: stdio,
-      stdout: stdio,
-      stderr: stdio,
-    });
+    const bunProcess = spawn(
+      join(multibunInstallDir, bunInstallation),
+      this.args,
+      {
+        stdio,
+      },
+    );
 
-    await bunProcess.exited;
+    const exitCode = await childProcessFinished(bunProcess);
 
     const endTime = performance.now();
     const time = endTime - startTime;
 
     log.debug("Bun process took", time, "ms");
-    if (bunProcess.exitCode === null) {
+    if (exitCode === null) {
       log.info("Bun process crashed or killed");
     } else {
       log.info("Bun process exited with code:", bunProcess.exitCode);
@@ -104,10 +109,10 @@ command.action(async function (this: Command, options) {
         time,
 
         stdout: bunProcess.stdout
-          ? await Bun.readableStreamToText(bunProcess.stdout)
+          ? await streamToString(bunProcess.stdout)
           : undefined,
         stderr: bunProcess.stderr
-          ? await Bun.readableStreamToText(bunProcess.stderr)
+          ? await streamToString(bunProcess.stderr)
           : undefined,
       });
     }
@@ -129,7 +134,7 @@ command.action(async function (this: Command, options) {
       const report = await generator.generate(results);
 
       if (typeof generatorOption === "string") {
-        await Bun.write(generatorOption, report);
+        await writeFile(generatorOption, report);
       } else {
         console.log(report);
       }

@@ -1,7 +1,21 @@
 import type { BunTarget } from "./target";
 
-import { chmod, mkdir, readlink, rename, rm } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { createWriteStream } from "node:fs";
+import {
+  access,
+  chmod,
+  constants,
+  mkdir,
+  readlink,
+  rename,
+  rm,
+} from "node:fs/promises";
 import { join } from "node:path";
+import { Readable } from "node:stream";
+import { finished } from "node:stream/promises";
+
+import { glob } from "fast-glob";
 
 import { log } from ".";
 import { bunExec, multibunCacheDir, multibunInstallDir } from "./config";
@@ -12,7 +26,9 @@ import {
   tagNameToVersion,
   versionToTagName,
 } from "./github";
+import { compareSemver } from "./semver";
 import { detectTarget } from "./target";
+import { childProcessFinished, streamToString } from "./utils";
 
 const allReleases = await getAllReleases();
 
@@ -42,11 +58,9 @@ export async function installBunVersion({
   validateBunVersion(version);
 
   if (!target) {
-    target = detectTarget();
+    target = await detectTarget();
   }
-  const targetDownloadFile = Bun.file(
-    join(multibunCacheDir, `${version}-${target}.zip`),
-  );
+  const targetDownloadFile = join(multibunCacheDir, `${version}-${target}.zip`);
 
   let exeName = "bun";
   if (target.endsWith("-profile")) {
@@ -54,16 +68,16 @@ export async function installBunVersion({
   }
 
   const binDir = join(multibunInstallDir, version, "bin");
-  const exe = Bun.file(join(binDir, "bun"));
+  const exe = join(binDir, "bun");
 
-  if (await exe.exists()) {
+  if (await access(exe, constants.R_OK | constants.X_OK).catch(() => false)) {
     log.debug("Already installed:", version);
     return;
   }
 
   await mkdir(binDir, { recursive: true });
 
-  if (await targetDownloadFile.exists()) {
+  if (await access(targetDownloadFile, constants.R_OK).catch(() => false)) {
     log.debug("Using cached:", version);
   } else {
     log.debug("Downloading:", version);
@@ -78,35 +92,38 @@ export async function installBunVersion({
       )}/bun-${encodeURIComponent(target)}.zip`,
     );
 
-    if (!resp.ok) {
+    if (!resp.ok || !resp.body) {
       throw new Error(
         `Failed to download ${version} for ${target}: ${resp.statusText}`,
       );
     }
 
-    await Bun.write(targetDownloadFile, resp);
+    // await writeFile(targetDownloadFile, new DataView(await resp.arrayBuffer()));
+    const writeStream = createWriteStream(targetDownloadFile);
+    await finished(Readable.fromWeb(resp.body).pipe(writeStream));
   }
 
-  log.debug("Unzipping:", targetDownloadFile.name!, "to", binDir);
+  log.debug("Unzipping:", targetDownloadFile, "to", binDir);
 
-  const unzipProcess = Bun.spawn({
-    cmd: ["unzip", "-oqd", binDir, targetDownloadFile.name!],
-    stderr: "pipe",
+  const unzipProcess = spawn("unzip", ["-oqd", binDir, targetDownloadFile], {
+    stdio: ["ignore", "ignore", "pipe"],
   });
 
-  if ((await unzipProcess.exited) !== 0) {
+  const unzipExitCode = await childProcessFinished(unzipProcess);
+
+  if (unzipExitCode !== 0) {
     throw new Error(
       `Failed to unzip ${version} for ${target}: exit code ${
         unzipProcess.exitCode
-      }\n${await Bun.readableStreamToText(unzipProcess.stderr)}`,
+      }\n${await streamToString(unzipProcess.stderr)}`,
     );
   }
 
   const unzippedDir = join(binDir, `bun-${target}`);
 
-  await rename(join(unzippedDir, exeName), exe.name!);
+  await rename(join(unzippedDir, exeName), exe);
 
-  await chmod(exe.name!, 0o755);
+  await chmod(exe, 0o755);
 
   await rm(unzippedDir, { recursive: true });
 }
@@ -174,13 +191,13 @@ export async function installBunVersionsInRange({
     const version = tagNameToVersion(release.tagName);
 
     if (versionMin) {
-      if (Bun.semver.order(version, versionMin) === -1) {
+      if (compareSemver(version, versionMin) === -1) {
         continue;
       }
     }
 
     if (versionMax) {
-      if (Bun.semver.order(version, versionMax) === 1) {
+      if (compareSemver(version, versionMax) === 1) {
         continue;
       }
     }
@@ -197,13 +214,11 @@ export async function installBunVersionsInRange({
 }
 
 export async function getInstalledVersions(sort: boolean | null = true) {
+  // TODO: use readdir with RegEx instead of glob
   const versions = (
-    await Array.fromAsync(
-      new Bun.Glob("bun-v?*/bin/bun").scan({
-        cwd: multibunInstallDir,
-        onlyFiles: false,
-      }),
-    )
+    await glob("bun-v?*/bin/bun", {
+      cwd: multibunInstallDir,
+    })
   ).map(
     (bunInstallation) =>
       [
@@ -217,7 +232,7 @@ export async function getInstalledVersions(sort: boolean | null = true) {
   } else {
     return versions.sort(
       ([, versionA], [, versionB]) =>
-        Bun.semver.order(versionA, versionB) * (sort ? 1 : -1),
+        compareSemver(versionA, versionB) * (sort ? 1 : -1),
     );
   }
 }

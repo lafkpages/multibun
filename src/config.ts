@@ -14,3 +14,12 @@ export const multibunDir =
 
 export const multibunCacheDir = join(multibunDir, "cache");
 export const multibunInstallDir = join(multibunDir, "versions");
+
+export const githubToken =
+  process.env.MULTIBUN_GITHUB_TOKEN ||
+  process.env.GITHUB_TOKEN ||
+  process.env.GITHUB_API_TOKEN;
+export const githubApi =
+  process.env.MULTIBUN_GITHUB_GRAPHQL_ENDPOINT ||
+  process.env.GITHUB_GRAPHQL_ENDPOINT ||
+  "https://api.github.com/graphql";

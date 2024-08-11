@@ -1,15 +1,9 @@
+import { readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { multibunCacheDir } from "./config";
+import { githubApi, githubToken, multibunCacheDir } from "./config";
 
-if (!process.env.GITHUB_API_TOKEN) {
-  throw new Error("$GITHUB_TOKEN is required");
-}
-
-const githubApi =
-  process.env.GITHUB_GRAPHQL_ENDPOINT || "https://api.github.com/graphql";
-
-const allReleasesCache = Bun.file(join(multibunCacheDir, "all-releases.json"));
+const allReleasesCache = join(multibunCacheDir, "all-releases.json");
 
 export const bunReleasesRepoOwner = "jarred-sumner";
 export const bunReleasesRepoName = "bun-releases-for-updater";
@@ -26,14 +20,17 @@ interface QueryData {
   };
 }
 
-export async function getAllReleases(useCache = true) {
+export async function getAllReleases(
+  useCache = true,
+): Promise<QueryData["repository"]["releases"]["nodes"]> {
   if (useCache) {
-    const allReleasesCacheAge = Date.now() - allReleasesCache.lastModified;
+    const allReleasesCacheStat = await stat(allReleasesCache);
+    const allReleasesCacheAge = Date.now() - allReleasesCacheStat.mtimeMs;
 
     // only use cache if it's less than a day old
     if (allReleasesCacheAge < 86400000) {
       try {
-        return await allReleasesCache.json();
+        return JSON.parse(await readFile(allReleasesCache, "utf-8"));
       } catch {}
     }
   }
@@ -41,6 +38,10 @@ export async function getAllReleases(useCache = true) {
   const releases: QueryData["repository"]["releases"]["nodes"] = [];
 
   let cursor: string | null = null;
+  const headers = new Headers();
+  if (githubToken) {
+    headers.set("Authorization", `Bearer ${githubToken}`);
+  }
   while (true) {
     const resp: QueryData = await fetch(githubApi, {
       method: "POST",
@@ -66,6 +67,7 @@ export async function getAllReleases(useCache = true) {
           cursor,
         },
       }),
+      headers,
     }).then((r) => r.json());
 
     releases.push(...resp.repository.releases.nodes);
@@ -81,7 +83,7 @@ export async function getAllReleases(useCache = true) {
     throw new Error("Failed to fetch all Bun releases from GitHub");
   }
 
-  await Bun.write(allReleasesCache, JSON.stringify(releases));
+  await writeFile(allReleasesCache, JSON.stringify(releases));
 
   return releases;
 }
