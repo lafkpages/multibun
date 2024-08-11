@@ -31,13 +31,13 @@ export default new Command("list")
 
       if (options.path) {
         console.log(
-          `${join(
+          `- ${join(
             multibunInstallDir,
             bunInstallation,
           )}:\t${version}${isCurrent}`,
         );
       } else {
-        console.log(`${version}${isCurrent}`);
+        console.log(`- ${version}${isCurrent}`);
       }
     }
   });
