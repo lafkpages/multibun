@@ -90,6 +90,7 @@ command.action(async function (this: Command, options) {
           ...process.env,
           BUN_VERSION: version,
         },
+        shell: true,
       },
     );
 
