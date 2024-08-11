@@ -6,10 +6,6 @@ import { join } from "node:path";
 export default new Command("list")
   .alias("ls")
   .description("List all installed Bun versions")
-  .option(
-    "-d, --install-dir <installDir>",
-    "Directory containing Bun versions to run"
-  )
   .addOption(
     new Option("-s, --sort <order>", "Sort versions in a given order")
       .choices(["ascending", "descending", "none"] as const)
@@ -17,9 +13,7 @@ export default new Command("list")
   )
   .option("-p, --path", "Show the path to the installed version")
   .action(async (options) => {
-    const installDir = options.installDir || multibunInstallDir;
     const bunInstallations = await getInstalledVersions(
-      installDir,
       options.sort === "none"
         ? null
         : options.sort === "descending"
@@ -29,7 +23,9 @@ export default new Command("list")
 
     for (const [bunInstallation, version] of bunInstallations) {
       if (options.path) {
-        console.log(`${join(installDir, bunInstallation)}:\t${version}`);
+        console.log(
+          `${join(multibunInstallDir, bunInstallation)}:\t${version}`
+        );
       } else {
         console.log(version);
       }

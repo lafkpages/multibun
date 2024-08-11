@@ -19,10 +19,10 @@ const command = new Command<
       "to",
     ])
   )
-  .option("-n, --no-output", "Do not show stdout/stderr of Bun processes", true)
   .option(
-    "-d, --install-dir <installDir>",
-    "Directory containing Bun versions to run"
+    "-n, --no-output",
+    "Do not show stdout/stderr of Bun processes",
+    true
   );
 
 for (const generator of runReportGenerators) {
@@ -40,8 +40,7 @@ command.action(async function (this: Command, options) {
     validateBunVersion(versionToTagName(options.V));
   }
 
-  const installDir = options.installDir || multibunInstallDir;
-  const bunInstallations = await getInstalledVersions(installDir);
+  const bunInstallations = await getInstalledVersions();
 
   const results: RunReportResult[] = [];
   const isGeneratingReport = runReportGenerators.some(
@@ -75,7 +74,7 @@ command.action(async function (this: Command, options) {
 
     const startTime = performance.now();
     const bunProcess = Bun.spawn({
-      cmd: [join(installDir, bunInstallation), ...this.args],
+      cmd: [join(multibunInstallDir, bunInstallation), ...this.args],
       stdin: stdio,
       stdout: stdio,
       stderr: stdio,

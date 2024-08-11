@@ -9,7 +9,7 @@ import {
 } from "./github";
 import { detectTarget, type BunTarget } from "./target";
 import { log } from ".";
-import { multibunCacheDir } from "./config";
+import { multibunCacheDir, multibunInstallDir } from "./config";
 
 const allReleases = await getAllReleases();
 
@@ -26,12 +26,10 @@ interface InstallBunVersionCommonOptions {
 export interface InstallBunVersionOptions
   extends InstallBunVersionCommonOptions {
   version: string;
-  installDir: string;
 }
 
 export async function installBunVersion({
   version,
-  installDir,
   target,
 }: InstallBunVersionOptions) {
   validateBunVersion(version);
@@ -48,7 +46,7 @@ export async function installBunVersion({
     exeName = "bun-profile";
   }
 
-  const binDir = join(installDir, "bin");
+  const binDir = join(multibunInstallDir, version, "bin");
   const exe = Bun.file(join(binDir, "bun"));
 
   if (await exe.exists()) {
@@ -108,7 +106,6 @@ export async function installBunVersion({
 
 interface InstallBunVersionsCommonOptions
   extends InstallBunVersionCommonOptions {
-  installDir: (version: string) => string;
   onInstall?: (version: string) => void;
   onError?: (err: unknown) => void;
 }
@@ -120,7 +117,6 @@ export interface InstallBunVersionsOptions
 
 export async function installBunVersions({
   versions,
-  installDir,
   target,
   onInstall,
   onError,
@@ -128,7 +124,6 @@ export async function installBunVersions({
   for (const version of versions) {
     const promise = installBunVersion({
       version,
-      installDir: installDir(version),
       target,
     }).then(() => {
       onInstall?.(version);
@@ -155,7 +150,6 @@ export interface InstallBunVersionsInRangeOptions
 export async function installBunVersionsInRange({
   versionMin,
   versionMax,
-  installDir,
   target,
   onInstall,
   onError,
@@ -189,21 +183,17 @@ export async function installBunVersionsInRange({
 
   await installBunVersions({
     versions,
-    installDir,
     target,
     onInstall,
     onError,
   });
 }
 
-export async function getInstalledVersions(
-  installDir: string,
-  sort: boolean | null = true
-) {
+export async function getInstalledVersions(sort: boolean | null = true) {
   const versions = (
     await Array.fromAsync(
       new Bun.Glob("bun-v?*/bin/bun").scan({
-        cwd: installDir,
+        cwd: multibunInstallDir,
         onlyFiles: false,
       })
     )
