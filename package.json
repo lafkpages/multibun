@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "module": "src/index.ts",
   "type": "module",
-  "bin": "./bin.js",
+  "bin": {
+    "multibun": "bin.js"
+  },
   "devDependencies": {
     "@commander-js/extra-typings": "^12.1.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
