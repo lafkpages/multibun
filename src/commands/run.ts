@@ -27,11 +27,8 @@ const command = new Command<
       "to",
     ]),
   )
-  .option(
-    "-n, --no-output",
-    "Do not show stdout/stderr of Bun processes",
-    true,
-  );
+  .option("-n, --no-output", "Do not show stdout/stderr of Bun processes", true)
+  .option("-x, --execute <command>", "Execute a command with each version");
 
 for (const generator of runReportGenerators) {
   command.option(`${generator.flag} [file]`, generator.description);
@@ -72,7 +69,11 @@ command.action(async function (this: Command, options) {
       continue;
     }
 
-    log.info("Executing Bun version:", version);
+    if (options.execute) {
+      log.info("Executing command with Bun version:", version);
+    } else {
+      log.info("Executing Bun version:", version);
+    }
 
     const stdio = options.output
       ? "inherit"
@@ -81,44 +82,44 @@ command.action(async function (this: Command, options) {
         : "ignore";
 
     const startTime = performance.now();
-    const bunProcess = spawn(
-      join(multibunInstallDir, bunInstallation),
+    const child = spawn(
+      options.execute || join(multibunInstallDir, bunInstallation),
       this.args,
       {
         stdio,
         env: {
           ...process.env,
+
+          // make sure the current version is first in the PATH
+          PATH: `${join(multibunInstallDir, bunInstallation, "..")}:${process.env.PATH}`,
+
           BUN_VERSION: version,
         },
         shell: true,
       },
     );
 
-    const exitCode = await childProcessFinished(bunProcess);
+    const exitCode = await childProcessFinished(child);
 
     const endTime = performance.now();
     const time = endTime - startTime;
 
-    log.debug("Bun process took", time, "ms");
+    log.debug("Process took", time, "ms");
     if (exitCode === null) {
-      log.info("Bun process crashed or killed");
+      log.info("Process crashed or killed");
     } else {
-      log.info("Bun process exited with code:", bunProcess.exitCode);
+      log.info("Process exited with code:", child.exitCode);
     }
 
     // only keep track of the results if we are generating a report
     if (isGeneratingReport) {
       results.push({
         version,
-        exitCode: bunProcess.exitCode,
+        exitCode: child.exitCode,
         time,
 
-        stdout: bunProcess.stdout
-          ? await streamToString(bunProcess.stdout)
-          : undefined,
-        stderr: bunProcess.stderr
-          ? await streamToString(bunProcess.stderr)
-          : undefined,
+        stdout: child.stdout ? await streamToString(child.stdout) : undefined,
+        stderr: child.stderr ? await streamToString(child.stderr) : undefined,
       });
     }
 
