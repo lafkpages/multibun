@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { mkdir, rename, chmod, rm } from "node:fs/promises";
+import { mkdir, rename, chmod, rm, readlink } from "node:fs/promises";
 import {
   bunReleasesRepoName,
   bunReleasesRepoOwner,
@@ -9,12 +9,16 @@ import {
 } from "./github";
 import { detectTarget, type BunTarget } from "./target";
 import { log } from ".";
-import { multibunCacheDir, multibunInstallDir } from "./config";
+import { bunExec, multibunCacheDir, multibunInstallDir } from "./config";
 
 const allReleases = await getAllReleases();
 
+export function isBunVersionValid(tagName: string) {
+  return allReleases.some((release) => release.tagName === tagName);
+}
+
 export function validateBunVersion(tagName: string) {
-  if (!allReleases.some((release) => release.tagName === tagName)) {
+  if (!isBunVersionValid(tagName)) {
     throw new Error(`Invalid Bun version: ${tagName}`);
   }
 }
@@ -213,4 +217,30 @@ export async function getInstalledVersions(sort: boolean | null = true) {
         Bun.semver.order(versionA, versionB) * (sort ? 1 : -1)
     );
   }
+}
+
+export async function getCurrentVersion(errorOnNotSymlink = true) {
+  const link = await readlink(bunExec).catch(() => null);
+
+  if (!link) {
+    if (errorOnNotSymlink) {
+      throw new Error("Global bun executable is not a symlink");
+    }
+    return null;
+  }
+
+  if (!link.startsWith(multibunInstallDir)) {
+    throw new Error("Global bun executable is not managed by multibun");
+  }
+
+  const version = link?.match(/(bun-v(.+))\/bin\/bun$/);
+
+  if (!version) {
+    throw new Error("Global bun executable path is invalid");
+  }
+
+  return {
+    tagName: version[1],
+    version: version[2],
+  };
 }

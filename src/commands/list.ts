@@ -1,6 +1,6 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { multibunInstallDir } from "../config";
-import { getInstalledVersions } from "../install";
+import { getCurrentVersion, getInstalledVersions } from "../install";
 import { join } from "node:path";
 
 export default new Command("list")
@@ -21,13 +21,21 @@ export default new Command("list")
         : true
     );
 
+    const currentVersion = await getCurrentVersion();
+
     for (const [bunInstallation, version] of bunInstallations) {
+      const isCurrent =
+        version === currentVersion?.version ? "\t(current)" : "";
+
       if (options.path) {
         console.log(
-          `${join(multibunInstallDir, bunInstallation)}:\t${version}`
+          `${join(
+            multibunInstallDir,
+            bunInstallation
+          )}:\t${version}${isCurrent}`
         );
       } else {
-        console.log(version);
+        console.log(`${version}${isCurrent}`);
       }
     }
   });

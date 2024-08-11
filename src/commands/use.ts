@@ -1,9 +1,18 @@
 import { Command, program } from "@commander-js/extra-typings";
-import { stat, unlink, link } from "node:fs/promises";
+import { readlink, unlink, symlink } from "node:fs/promises";
 import { join } from "node:path";
-import { bunBinDir, multibunInstallDir } from "../config";
-import { validateBunVersion } from "../install";
+import { bunExec, multibunInstallDir } from "../config";
+import {
+  getCurrentVersion,
+  isBunVersionValid,
+  validateBunVersion,
+} from "../install";
 import { resolveVersion } from "../github";
+import { log } from "..";
+
+const overwriteMessage = `\
+
+Hint: use '--overwrite' to force the operation.`;
 
 export default new Command("use")
   .description("Link the global bun executable to a specific version")
@@ -16,16 +25,30 @@ export default new Command("use")
     version = await resolveVersion(version);
     validateBunVersion(version);
 
-    const globalBunExec = join(bunBinDir, "bun");
-    const stats = await stat(globalBunExec);
+    const currentVersion = await getCurrentVersion(false);
 
-    if (stats.isFile() && !stats.isSymbolicLink() && !options.overwrite) {
+    if (!currentVersion && !options.overwrite) {
       program.error(
-        `\
-Global bun executable seems to be a normal Bun installation, exiting to avoid overwriting it.
-
-Hint: use '--overwrite' to force the operation.`
+        "Global bun executable seems to be a normal Bun installation, exiting to avoid overwriting it." +
+          overwriteMessage
       );
+    }
+
+    if (currentVersion) {
+      if (currentVersion.tagName === version) {
+        log.info(`Version ${version} is already in use.`);
+        return;
+      }
+
+      if (currentVersion) {
+        log.debug("Current version:", currentVersion);
+      }
+
+      if (!isBunVersionValid(currentVersion.tagName)) {
+        log.warn(
+          "Global bun executable is managed by multibun, but the version is invalid."
+        );
+      }
     }
 
     const newBunExec = Bun.file(
@@ -39,6 +62,6 @@ Version ${version} is not installed.
 Hint: try running 'multibun install ${version}' to install it.`);
     }
 
-    await unlink(globalBunExec);
-    await link(newBunExec.name!, globalBunExec);
+    await unlink(bunExec);
+    await symlink(newBunExec.name!, bunExec, "file");
   });

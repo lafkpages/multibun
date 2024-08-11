@@ -7,6 +7,7 @@ if (!bunInstallationDir) {
 }
 
 export const bunBinDir = join(bunInstallationDir, "bin");
+export const bunExec = join(bunBinDir, "bun");
 
 export const multibunDir =
   process.env.MULTIBUN_DIR || join(bunInstallationDir, "multibun");
