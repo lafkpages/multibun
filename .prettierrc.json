@@ -2,6 +2,7 @@
   "plugins": ["@ianvs/prettier-plugin-sort-imports"],
 
   "importOrderTypeScriptVersion": "5.5.4",
+  "importOrderParserPlugins": ["typescript", "importAttributes"],
   "importOrder": [
     "<TYPES>",
     "<TYPES>^[.]",
