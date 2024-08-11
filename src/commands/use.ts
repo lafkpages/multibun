@@ -21,10 +21,24 @@ export default new Command("use")
 
     if (stats.isFile() && !stats.isSymbolicLink() && !options.overwrite) {
       program.error(
-        "Global bun executable seems to be a normal Bun installation, exiting to avoid overwriting it.\n\nHint: use --overwrite to force the operation."
+        `\
+Global bun executable seems to be a normal Bun installation, exiting to avoid overwriting it.
+
+Hint: use '--overwrite' to force the operation.`
       );
     }
 
+    const newBunExec = Bun.file(
+      join(multibunInstallDir, version, "bin", "bun")
+    );
+
+    if (!(await newBunExec.exists())) {
+      program.error(`\
+Version ${version} is not installed.
+
+Hint: try running 'multibun install ${version}' to install it.`);
+    }
+
     await unlink(globalBunExec);
-    await link(join(multibunInstallDir, version, "bin", "bun"), globalBunExec);
+    await link(newBunExec.name!, globalBunExec);
   });
