@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 const bunInstallationDir = process.env.BUN_INSTALL;
@@ -14,6 +15,9 @@ export const multibunDir =
 
 export const multibunCacheDir = join(multibunDir, "cache");
 export const multibunInstallDir = join(multibunDir, "versions");
+
+await mkdir(multibunCacheDir, { recursive: true });
+await mkdir(multibunInstallDir, { recursive: true });
 
 export const githubToken =
   process.env.MULTIBUN_GITHUB_TOKEN ||
