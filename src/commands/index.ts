@@ -1,4 +1,5 @@
-import { default as run } from "./run";
-import { default as install } from "./install";
+import install from "./install";
+import list from "./list";
+import run from "./run";
 
-export const commands = [run, install];
+export const commands = [install, list, run];

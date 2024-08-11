@@ -1,7 +1,7 @@
 import { Command, Option, program } from "@commander-js/extra-typings";
 import { log } from "..";
 import { join } from "node:path";
-import { validateBunVersion } from "../install";
+import { getInstalledVersions, validateBunVersion } from "../install";
 import { versionToTagName } from "../github";
 import { runReportGenerators, type RunReportResult } from "../reports";
 import { multibunInstallDir } from "../config";
@@ -41,20 +41,7 @@ command.action(async function (this: Command, options) {
   }
 
   const installDir = options.installDir || multibunInstallDir;
-
-  const bunInstallations = (
-    await Array.fromAsync(
-      new Bun.Glob("bun-v?*/bin/bun").scan({
-        cwd: installDir,
-        onlyFiles: false,
-      })
-    )
-  )
-    .map((bunInstallation) => [
-      bunInstallation,
-      bunInstallation.match(/^bun-v(.+)\/bin\/bun$/)![1],
-    ])
-    .sort(([, versionA], [, versionB]) => Bun.semver.order(versionA, versionB));
+  const bunInstallations = await getInstalledVersions(installDir);
 
   const results: RunReportResult[] = [];
   const isGeneratingReport = runReportGenerators.some(

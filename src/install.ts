@@ -195,3 +195,32 @@ export async function installBunVersionsInRange({
     onError,
   });
 }
+
+export async function getInstalledVersions(
+  installDir: string,
+  sort: boolean | null = true
+) {
+  const versions = (
+    await Array.fromAsync(
+      new Bun.Glob("bun-v?*/bin/bun").scan({
+        cwd: installDir,
+        onlyFiles: false,
+      })
+    )
+  ).map(
+    (bunInstallation) =>
+      [
+        bunInstallation,
+        bunInstallation.match(/^bun-v(.+)\/bin\/bun$/)![1],
+      ] as const
+  );
+
+  if (sort === null) {
+    return versions;
+  } else {
+    return versions.sort(
+      ([, versionA], [, versionB]) =>
+        Bun.semver.order(versionA, versionB) * (sort ? 1 : -1)
+    );
+  }
+}
