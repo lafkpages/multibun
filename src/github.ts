@@ -85,3 +85,11 @@ export function versionToTagName(version: string) {
 
   return `bun-v${version}`;
 }
+
+export async function resolveVersion(version: string) {
+  if (version === "latest") {
+    return (await getAllReleases())[0].tagName;
+  }
+
+  return versionToTagName(version);
+}
