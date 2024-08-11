@@ -24,8 +24,10 @@ export async function getAllReleases(
   useCache = true,
 ): Promise<QueryData["repository"]["releases"]["nodes"]> {
   if (useCache) {
-    const allReleasesCacheStat = await stat(allReleasesCache);
-    const allReleasesCacheAge = Date.now() - allReleasesCacheStat.mtimeMs;
+    const allReleasesCacheStat = await stat(allReleasesCache).catch(() => null);
+    const allReleasesCacheAge = allReleasesCacheStat
+      ? Date.now() - allReleasesCacheStat.mtimeMs
+      : Infinity;
 
     // only use cache if it's less than a day old
     if (allReleasesCacheAge < 86400000) {
