@@ -1,6 +1,6 @@
 import type { RunReportResult } from "../reports";
 
-import { spawn } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -54,7 +54,7 @@ command.action(async function (this: Command, options) {
 
   let hasRunAnyVersion = false;
 
-  for await (const [bunInstallation, version] of bunInstallations) {
+  for (const [bunInstallation, version] of bunInstallations) {
     log.debug("Found Bun installation:", bunInstallation);
 
     if (options.from && compareSemver(version, options.from) === -1) {
@@ -82,11 +82,13 @@ command.action(async function (this: Command, options) {
         : "ignore";
 
     const startTime = performance.now();
-    const child = spawn(
+    const child = spawnSync(
       options.execute || join(multibunInstallDir, bunInstallation),
       this.args,
       {
         stdio,
+        encoding: "utf-8",
+
         env: {
           ...process.env,
 
@@ -98,28 +100,25 @@ command.action(async function (this: Command, options) {
         shell: true,
       },
     );
-
-    const exitCode = await childProcessFinished(child);
-
     const endTime = performance.now();
     const time = endTime - startTime;
 
     log.debug("Process took", time, "ms");
-    if (exitCode === null) {
-      log.info("Process crashed or killed");
+    if (child.status === null) {
+      log.info("Process crashed or killed, signal:", child.signal);
     } else {
-      log.info("Process exited with code:", child.exitCode);
+      log.info("Process exited with code:", child.status);
     }
 
     // only keep track of the results if we are generating a report
     if (isGeneratingReport) {
       results.push({
         version,
-        exitCode: child.exitCode,
+        exitCode: child.status,
         time,
 
-        stdout: child.stdout ? await streamToString(child.stdout) : undefined,
-        stderr: child.stderr ? await streamToString(child.stderr) : undefined,
+        stdout: child.stdout,
+        stderr: child.stderr,
       });
     }
 
