@@ -86,6 +86,10 @@ command.action(async function (this: Command, options) {
       this.args,
       {
         stdio,
+        env: {
+          ...process.env,
+          BUN_VERSION: version,
+        },
       },
     );
 
