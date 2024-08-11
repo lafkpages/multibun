@@ -1,4 +1,4 @@
-import { platform, arch } from "node:os";
+import { arch, platform } from "node:os";
 
 export const bunTargetsNormal = [
   "darwin-aarch64",

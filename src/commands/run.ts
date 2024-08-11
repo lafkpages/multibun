@@ -1,10 +1,14 @@
-import { Command, Option, program } from "@commander-js/extra-typings";
-import { log } from "..";
+import type { RunReportResult } from "../reports";
+
 import { join } from "node:path";
-import { getInstalledVersions, validateBunVersion } from "../install";
-import { versionToTagName } from "../github";
-import { runReportGenerators, type RunReportResult } from "../reports";
+
+import { Command, Option, program } from "@commander-js/extra-typings";
+
+import { log } from "..";
 import { multibunInstallDir } from "../config";
+import { versionToTagName } from "../github";
+import { getInstalledVersions, validateBunVersion } from "../install";
+import { runReportGenerators } from "../reports";
 
 const command = new Command<
   [],
@@ -17,12 +21,12 @@ const command = new Command<
     new Option("-V <version>", "Specific version to run").conflicts([
       "from",
       "to",
-    ])
+    ]),
   )
   .option(
     "-n, --no-output",
     "Do not show stdout/stderr of Bun processes",
-    true
+    true,
   );
 
 for (const generator of runReportGenerators) {
@@ -44,7 +48,7 @@ command.action(async function (this: Command, options) {
 
   const results: RunReportResult[] = [];
   const isGeneratingReport = runReportGenerators.some(
-    (generator) => options[generator.key]
+    (generator) => options[generator.key],
   );
 
   let hasRunAnyVersion = false;
@@ -69,8 +73,8 @@ command.action(async function (this: Command, options) {
     const stdio = options.output
       ? "inherit"
       : isGeneratingReport
-      ? "pipe"
-      : "ignore";
+        ? "pipe"
+        : "ignore";
 
     const startTime = performance.now();
     const bunProcess = Bun.spawn({

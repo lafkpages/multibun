@@ -1,5 +1,6 @@
-import { stringify } from "csv-stringify/sync";
 import type { RunReportGenerator } from ".";
+
+import { stringify } from "csv-stringify/sync";
 
 export default {
   flag: "--csv",

@@ -1,4 +1,5 @@
 import { Command } from "@commander-js/extra-typings";
+
 import { getAllReleases } from "../github";
 
 export default new Command("list-remote")

@@ -1,7 +1,6 @@
 import type { RunReportGenerator, RunReportResult } from ".";
 
 import { Console } from "node:console";
-
 import { Writable } from "node:stream";
 
 function consoleTableToString(...args: Parameters<Console["table"]>) {

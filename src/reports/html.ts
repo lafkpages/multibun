@@ -1,5 +1,7 @@
 import type { RunReportGenerator } from ".";
+
 import { render } from "ejs";
+
 import template from "./template.ejs";
 
 export default {

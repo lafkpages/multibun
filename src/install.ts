@@ -1,5 +1,10 @@
+import type { BunTarget } from "./target";
+
+import { chmod, mkdir, readlink, rename, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { mkdir, rename, chmod, rm, readlink } from "node:fs/promises";
+
+import { log } from ".";
+import { bunExec, multibunCacheDir, multibunInstallDir } from "./config";
 import {
   bunReleasesRepoName,
   bunReleasesRepoOwner,
@@ -7,9 +12,7 @@ import {
   tagNameToVersion,
   versionToTagName,
 } from "./github";
-import { detectTarget, type BunTarget } from "./target";
-import { log } from ".";
-import { bunExec, multibunCacheDir, multibunInstallDir } from "./config";
+import { detectTarget } from "./target";
 
 const allReleases = await getAllReleases();
 
@@ -42,7 +45,7 @@ export async function installBunVersion({
     target = detectTarget();
   }
   const targetDownloadFile = Bun.file(
-    join(multibunCacheDir, `${version}-${target}.zip`)
+    join(multibunCacheDir, `${version}-${target}.zip`),
   );
 
   let exeName = "bun";
@@ -67,17 +70,17 @@ export async function installBunVersion({
 
     const resp = await fetch(
       `https://github.com/${encodeURIComponent(
-        bunReleasesRepoOwner
+        bunReleasesRepoOwner,
       )}/${encodeURIComponent(
-        bunReleasesRepoName
+        bunReleasesRepoName,
       )}/releases/download/${encodeURIComponent(
-        version
-      )}/bun-${encodeURIComponent(target)}.zip`
+        version,
+      )}/bun-${encodeURIComponent(target)}.zip`,
     );
 
     if (!resp.ok) {
       throw new Error(
-        `Failed to download ${version} for ${target}: ${resp.statusText}`
+        `Failed to download ${version} for ${target}: ${resp.statusText}`,
       );
     }
 
@@ -95,7 +98,7 @@ export async function installBunVersion({
     throw new Error(
       `Failed to unzip ${version} for ${target}: exit code ${
         unzipProcess.exitCode
-      }\n${await Bun.readableStreamToText(unzipProcess.stderr)}`
+      }\n${await Bun.readableStreamToText(unzipProcess.stderr)}`,
     );
   }
 
@@ -199,14 +202,14 @@ export async function getInstalledVersions(sort: boolean | null = true) {
       new Bun.Glob("bun-v?*/bin/bun").scan({
         cwd: multibunInstallDir,
         onlyFiles: false,
-      })
+      }),
     )
   ).map(
     (bunInstallation) =>
       [
         bunInstallation,
         bunInstallation.match(/^bun-v(.+)\/bin\/bun$/)![1],
-      ] as const
+      ] as const,
   );
 
   if (sort === null) {
@@ -214,7 +217,7 @@ export async function getInstalledVersions(sort: boolean | null = true) {
   } else {
     return versions.sort(
       ([, versionA], [, versionB]) =>
-        Bun.semver.order(versionA, versionB) * (sort ? 1 : -1)
+        Bun.semver.order(versionA, versionB) * (sort ? 1 : -1),
     );
   }
 }

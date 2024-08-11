@@ -4,9 +4,10 @@ import {
   Option,
   program,
 } from "@commander-js/extra-typings";
+
+import { log } from "..";
 import { installBunVersion, installBunVersionsInRange } from "../install";
 import { bunTargets } from "../target";
-import { log } from "..";
 
 export default new Command("install")
   .description("Install all Bun versions in a given range")
@@ -15,20 +16,20 @@ export default new Command("install")
   .addOption(
     new Option(
       "-T, --target <target>",
-      "Platform target to install Bun versions for"
-    ).choices(bunTargets)
+      "Platform target to install Bun versions for",
+    ).choices(bunTargets),
   )
   .addArgument(new Argument("[version]", "Version to install"))
   .action(async (version, options) => {
     if (!options.from && !options.to && !version) {
       program.error(
-        "Neither --from nor --to nor -V was provided, this is probably a mistake"
+        "Neither --from nor --to nor -V was provided, this is probably a mistake",
       );
     }
 
     if ((options.from || options.to) && version) {
       program.error(
-        "Cannot specify both a version range and a single version to install"
+        "Cannot specify both a version range and a single version to install",
       );
     }
 

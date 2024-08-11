@@ -1,5 +1,7 @@
-import { Octokit } from "octokit";
 import { join } from "node:path";
+
+import { Octokit } from "octokit";
+
 import { log } from ".";
 import { multibunCacheDir, multibunDir } from "./config";
 
@@ -25,7 +27,7 @@ interface QueryData {
 }
 
 export async function getAllReleases(
-  useCache = true
+  useCache = true,
 ): Promise<QueryData["repository"]["releases"]["nodes"]> {
   if (useCache) {
     const allReleasesCacheAge = Date.now() - allReleasesCache.lastModified;
@@ -57,7 +59,7 @@ export async function getAllReleases(
     {
       owner: bunReleasesRepoOwner,
       name: bunReleasesRepoName,
-    }
+    },
   );
   const releasesNodes = releases?.repository?.releases?.nodes;
 

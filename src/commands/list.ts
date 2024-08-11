@@ -1,7 +1,9 @@
+import { join } from "node:path";
+
 import { Command, Option } from "@commander-js/extra-typings";
+
 import { multibunInstallDir } from "../config";
 import { getCurrentVersion, getInstalledVersions } from "../install";
-import { join } from "node:path";
 
 export default new Command("list")
   .alias("ls")
@@ -9,7 +11,7 @@ export default new Command("list")
   .addOption(
     new Option("-s, --sort <order>", "Sort versions in a given order")
       .choices(["ascending", "descending", "none"] as const)
-      .default("ascending")
+      .default("ascending"),
   )
   .option("-p, --path", "Show the path to the installed version")
   .action(async (options) => {
@@ -17,8 +19,8 @@ export default new Command("list")
       options.sort === "none"
         ? null
         : options.sort === "descending"
-        ? false
-        : true
+          ? false
+          : true,
     );
 
     const currentVersion = await getCurrentVersion();
@@ -31,8 +33,8 @@ export default new Command("list")
         console.log(
           `${join(
             multibunInstallDir,
-            bunInstallation
-          )}:\t${version}${isCurrent}`
+            bunInstallation,
+          )}:\t${version}${isCurrent}`,
         );
       } else {
         console.log(`${version}${isCurrent}`);

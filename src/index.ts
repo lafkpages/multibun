@@ -1,7 +1,8 @@
-import { program, Option } from "@commander-js/extra-typings";
+import { Option, program } from "@commander-js/extra-typings";
+import log from "loglevel";
+
 import { version } from "../package.json";
 import { commands } from "./commands";
-import log from "loglevel";
 
 log.setDefaultLevel(log.levels.INFO);
 log.resetLevel();
@@ -12,10 +13,10 @@ program
   .name("multibun")
   .version(version, "--version")
   .addOption(
-    new Option("-v, --verbose", "Enable verbose logging").conflicts("--quiet")
+    new Option("-v, --verbose", "Enable verbose logging").conflicts("--quiet"),
   )
   .addOption(
-    new Option("-q, --quiet", "Disable logging").conflicts("--verbose")
+    new Option("-q, --quiet", "Disable logging").conflicts("--verbose"),
   )
   .hook("preAction", (thisCommand) => {
     const { verbose, quiet } = thisCommand.opts();
