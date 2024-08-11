@@ -1,15 +1,10 @@
-import {
-  Argument,
-  Command,
-  Option,
-  program,
-} from "@commander-js/extra-typings";
+import { Argument, Command, Option } from "@commander-js/extra-typings";
 
 import { log } from "..";
 import { installBunVersion, installBunVersionsInRange } from "../install";
 import { bunTargets } from "../target";
 
-export default new Command("install")
+const command = new Command("install")
   .description("Install all Bun versions in a given range")
   .option("-f, --from <version>", "Lower bound of version range to install")
   .option("-t, --to <version>", "Upper bound of version range to install")
@@ -22,13 +17,14 @@ export default new Command("install")
   .addArgument(new Argument("[version]", "Version to install"))
   .action(async (version, options) => {
     if (!options.from && !options.to && !version) {
-      program.error(
+      command.showHelpAfterError();
+      command.error(
         "Neither --from nor --to nor -V was provided, this is probably a mistake",
       );
     }
 
     if ((options.from || options.to) && version) {
-      program.error(
+      command.error(
         "Cannot specify both a version range and a single version to install",
       );
     }
@@ -58,3 +54,5 @@ export default new Command("install")
       });
     }
   });
+
+export default command;
