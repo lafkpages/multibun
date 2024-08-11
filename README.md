@@ -100,3 +100,9 @@ multibun run --from 1.1.0 --to 1.1.10 -- --revision
 
 This can be useful for testing libraries or applications against multiple versions of Bun. It could also
 aid in debugging issues that may be specific to a certain version of Bun.
+
+Multibun can also generate pretty reports with the results of the Bun processes in a `run` command.
+
+```sh
+multibun run --from 1.1.0 --to 1.1.10 -n --html myreport.html -- --revision
+```
