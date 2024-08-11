@@ -10,7 +10,7 @@ export { log };
 
 program
   .name("multibun")
-  .version(version)
+  .version(version, "--version")
   .addOption(
     new Option("-v, --verbose", "Enable verbose logging").conflicts("--quiet")
   )

@@ -1,4 +1,4 @@
-import { Command } from "@commander-js/extra-typings";
+import { Command, Option, program } from "@commander-js/extra-typings";
 import { log } from "..";
 import { join } from "node:path";
 import { validateBunVersion } from "../install";
@@ -13,6 +13,12 @@ const command = new Command<
   .description("Run several Bun versions with the given arguments")
   .option("-f, --from <version>", "Lower bound of version range to run")
   .option("-t, --to <version>", "Upper bound of version range to run")
+  .addOption(
+    new Option("-V <version>", "Specific version to run").conflicts([
+      "from",
+      "to",
+    ])
+  )
   .option("-n, --no-output", "Do not show stdout/stderr of Bun processes", true)
   .option(
     "-d, --install-dir <installDir>",
@@ -29,6 +35,9 @@ command.action(async function (this: Command, options) {
   }
   if (options.to) {
     validateBunVersion(versionToTagName(options.to));
+  }
+  if (options.V) {
+    validateBunVersion(versionToTagName(options.V));
   }
 
   const installDir = options.installDir || multibunInstallDir;
@@ -52,6 +61,8 @@ command.action(async function (this: Command, options) {
     (generator) => options[generator.key]
   );
 
+  let hasRunAnyVersion = false;
+
   for await (const [bunInstallation, version] of bunInstallations) {
     log.debug("Found Bun installation:", bunInstallation);
 
@@ -60,6 +71,10 @@ command.action(async function (this: Command, options) {
     }
 
     if (options.to && Bun.semver.order(version, options.to) === 1) {
+      continue;
+    }
+
+    if (options.V && Bun.semver.order(version, options.V)) {
       continue;
     }
 
@@ -106,6 +121,12 @@ command.action(async function (this: Command, options) {
           : undefined,
       });
     }
+
+    hasRunAnyVersion = true;
+  }
+
+  if (!hasRunAnyVersion) {
+    program.error("No Bun versions matched");
   }
 
   if (isGeneratingReport) {
