@@ -1,5 +1,6 @@
 {
   "name": "multibun",
+  "description": "A version manager for Bun.",
   "version": "1.0.0",
   "module": "src/index.ts",
   "type": "module",

@@ -1,7 +1,7 @@
 import { Option, program } from "@commander-js/extra-typings";
 import log from "loglevel";
 
-import { version } from "../package.json";
+import { description, version } from "../package.json";
 import { commands } from "./commands";
 
 log.setDefaultLevel(log.levels.INFO);
@@ -11,6 +11,7 @@ export { log };
 
 program
   .name("multibun")
+  .description(description)
   .version(version, "--version")
   .addOption(
     new Option("-v, --verbose", "Enable verbose logging").conflicts("--quiet"),
