@@ -1,6 +1,6 @@
 {
   "name": "multibun",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "module": "src/index.ts",
   "type": "module",
   "bin": "./bin.js",
@@ -24,5 +24,9 @@
   "scripts": {
     "build": "bun build ./src/index.ts --minify --sourcemap --target node --outdir dist",
     "format": "prettier --write ."
-  }
+  },
+  "files": [
+    "bin.js",
+    "dist/index.js"
+  ]
 }
