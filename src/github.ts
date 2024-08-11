@@ -78,8 +78,11 @@ export function tagNameToVersion(tagName: string) {
   throw new Error(`Invalid Bun release tag name: ${tagName}`);
 }
 
-export function versionToTagName(version: string) {
+export function versionToTagName(version: string, allowTagName = false) {
   if (version.startsWith("bun-v")) {
+    if (allowTagName) {
+      return version;
+    }
     throw new Error(`Received unexpected tag name: ${version}`);
   }
 
@@ -91,5 +94,5 @@ export async function resolveVersion(version: string) {
     return (await getAllReleases())[0].tagName;
   }
 
-  return versionToTagName(version);
+  return versionToTagName(version, true);
 }
