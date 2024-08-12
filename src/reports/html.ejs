@@ -84,7 +84,13 @@
       <tbody>
         <% for (const result of results) { %>
         <tr
-          class="run-report-result proc-<%- result.exitCode===null?'killed':(result.exitCode===0?'success':'fail') %>"
+          class="run-report-result proc-<%-
+            result.exitCode === null
+              ? 'killed' :
+              result.exitCode === 0
+                ? 'success'
+                : 'fail'
+          %>"
         >
           <td>
             <a
@@ -116,6 +122,9 @@
       </tbody>
     </table>
 
-    <p>Report generated at <%= new Date() %></p>
+    <p>
+      Report generated at <%= new Date() %> with Multibun version <%= version %> and
+      <%= process.isBun ? `Bun version ${Bun.version}` : `Node version ${process.version}` %>
+    </p>
   </body>
 </html>
