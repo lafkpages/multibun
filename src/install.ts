@@ -30,14 +30,14 @@ import { compareSemver } from "./semver";
 import { detectTarget } from "./target";
 import { childProcessFinished, streamToString } from "./utils";
 
-const allReleases = await getAllReleases();
-
-export function isBunVersionValid(tagName: string) {
-  return allReleases.some((release) => release.tagName === tagName);
+export async function isBunVersionValid(tagName: string) {
+  return (await getAllReleases()).some(
+    (release) => release.tagName === tagName,
+  );
 }
 
-export function validateBunVersion(tagName: string) {
-  if (!isBunVersionValid(tagName)) {
+export async function validateBunVersion(tagName: string) {
+  if (!(await isBunVersionValid(tagName))) {
     throw new Error(`Invalid Bun version: ${tagName}`);
   }
 }
@@ -187,7 +187,7 @@ export async function installBunVersionsInRange({
 
   const versions: string[] = [];
 
-  for (const release of allReleases) {
+  for (const release of await getAllReleases()) {
     const version = tagNameToVersion(release.tagName);
 
     if (versionMin) {
