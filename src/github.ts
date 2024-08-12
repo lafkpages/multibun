@@ -47,7 +47,7 @@ export async function getAllReleases(
     headers.set("Authorization", `Bearer ${githubToken}`);
   }
   while (true) {
-    const resp: QueryData = await fetch(githubApi, {
+    const resp: Response = await fetch(githubApi, {
       method: "POST",
       body: JSON.stringify({
         query: `
@@ -72,15 +72,21 @@ export async function getAllReleases(
         },
       }),
       headers,
-    }).then((r) => r.json());
+    });
+    const data: QueryData | { message: string } = await resp.json();
 
-    releases.push(...resp.data.repository.releases.nodes);
+    if (!resp.ok || !("data" in data)) {
+      const message = "message" in data ? data.message : resp.statusText;
+      throw new Error(`Failed to fetch Bun releases from GitHub: ${message}`);
+    }
 
-    if (!resp.data.repository.releases.pageInfo.hasNextPage) {
+    releases.push(...data.data.repository.releases.nodes);
+
+    if (!data.data.repository.releases.pageInfo.hasNextPage) {
       break;
     }
 
-    cursor = resp.data.repository.releases.pageInfo.endCursor;
+    cursor = data.data.repository.releases.pageInfo.endCursor;
   }
 
   if (!releases.length) {
