@@ -24,6 +24,14 @@ export default new Command("list")
           : true,
     );
 
+    if (!bunInstallations.length) {
+      log.info(`\
+No Bun versions are installed.
+
+Hint: use 'multibun list-remote' to view available versions, and 'multibun install' to install them.`);
+      return;
+    }
+
     const currentVersion = await getCurrentVersion(false).catch((err) => {
       log.warn("Warning:", err.message);
     });
