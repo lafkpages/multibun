@@ -2,7 +2,7 @@ import type { RunReportGenerator } from ".";
 
 import { render } from "ejs";
 
-import template from "./template.ejs" with { type: "text" };
+import template from "./html.ejs" with { type: "text" };
 
 export default {
   flag: "--html",
