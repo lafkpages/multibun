@@ -70,7 +70,11 @@ export async function installBunVersion({
   const binDir = join(multibunInstallDir, version, "bin");
   const exe = join(binDir, "bun");
 
-  if (await access(exe, constants.R_OK | constants.X_OK).catch(() => false)) {
+  if (
+    await access(exe, constants.R_OK | constants.X_OK)
+      .then(() => true)
+      .catch(() => false)
+  ) {
     log.debug("Already installed:", version);
     return;
   }
