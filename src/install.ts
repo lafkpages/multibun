@@ -81,7 +81,11 @@ export async function installBunVersion({
 
   await mkdir(binDir, { recursive: true });
 
-  if (await access(targetDownloadFile, constants.R_OK).catch(() => false)) {
+  if (
+    await access(targetDownloadFile, constants.R_OK)
+      .then(() => true)
+      .catch(() => false)
+  ) {
     log.debug("Using cached:", version);
   } else {
     log.debug("Downloading:", version);

@@ -56,9 +56,9 @@ export default new Command("use")
     const newBunExec = join(multibunInstallDir, version, "bin", "bun");
 
     if (
-      !(await access(newBunExec, constants.R_OK | constants.X_OK).catch(
-        () => false,
-      ))
+      !(await access(newBunExec, constants.R_OK | constants.X_OK)
+        .then(() => true)
+        .catch(() => false))
     ) {
       program.error(`\
 Version ${version} is not installed.
