@@ -2,6 +2,8 @@
 
 A version manager for [Bun](https://bun.sh).
 
+![multibun demo recording](assets/demo.svg)
+
 ## Installation
 
 Multibun is a command line tool that can be installed globally using npm (or your preferred package manager).
