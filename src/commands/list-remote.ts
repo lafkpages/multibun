@@ -1,5 +1,6 @@
 import { Command, Option, program } from "@commander-js/extra-typings";
 
+import { log } from "..";
 import { getAllReleases } from "../github";
 
 export default new Command("list-remote")
@@ -12,6 +13,9 @@ export default new Command("list-remote")
     )
       .default(25)
       .argParser(parseInt),
+  )
+  .addOption(
+    new Option("-a, --all", "List all versions.").implies({ limit: -1 }),
   )
   .action(async (options) => {
     if (options.limit === -1) {
@@ -28,5 +32,7 @@ export default new Command("list-remote")
 
     if (options.limit < releases.length) {
       console.log("...");
+
+      log.info("\nHint: use --limit or --all to list more versions.");
     }
   });
