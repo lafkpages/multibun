@@ -27,6 +27,19 @@ export default new Command("use")
     version = await resolveVersion(version);
     validateBunVersion(version);
 
+    const newBunExec = join(multibunInstallDir, version, "bin", "bun");
+
+    if (
+      !(await access(newBunExec, constants.R_OK | constants.X_OK)
+        .then(() => true)
+        .catch(() => false))
+    ) {
+      program.error(`\
+Version ${version} is not installed.
+
+Hint: try running 'multibun install ${version}' to install it.`);
+    }
+
     const currentVersion = await getCurrentVersion(false);
 
     if (!currentVersion && !options.overwrite) {
@@ -51,19 +64,6 @@ export default new Command("use")
           "Global bun executable is managed by multibun, but the version is invalid.",
         );
       }
-    }
-
-    const newBunExec = join(multibunInstallDir, version, "bin", "bun");
-
-    if (
-      !(await access(newBunExec, constants.R_OK | constants.X_OK)
-        .then(() => true)
-        .catch(() => false))
-    ) {
-      program.error(`\
-Version ${version} is not installed.
-
-Hint: try running 'multibun install ${version}' to install it.`);
     }
 
     await unlink(bunExec);
